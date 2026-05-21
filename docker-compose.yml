@@ -1,0 +1,154 @@
+version: '3.8'
+
+services:
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - api
+    networks:
+      - tempmail-net
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://tempmail.localhost/api/v1
+    depends_on:
+      - api
+    networks:
+      - tempmail-net
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/tempmail?sslmode=disable
+      - REDIS_URL=redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=attachments
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - tempmail-net
+
+  smtp:
+    build:
+      context: .
+      dockerfile: apps/smtp/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "25:25"
+      - "2525:2525"
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/tempmail?sslmode=disable
+      - REDIS_URL=redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=attachments
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - tempmail-net
+
+  worker:
+    build:
+      context: .
+      dockerfile: apps/worker/Dockerfile
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/tempmail?sslmode=disable
+      - REDIS_URL=redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+      - MINIO_BUCKET=attachments
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - tempmail-net
+
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=tempmail
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tempmail-net
+
+  redis:
+    image: redis:8
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tempmail-net
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - tempmail-net
+
+  minio-create-bucket:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/attachments || true;
+      /usr/bin/mc anonymous set download myminio/attachments || true;
+      exit 0;
+      "
+    networks:
+      - tempmail-net
+
+networks:
+  tempmail-net:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  redis_data:
+  minio_data:
