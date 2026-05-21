@@ -92,6 +92,13 @@ func main() {
 	v1.Delete("/inboxes/:id", deleteInbox)
 	v1.Get("/attachments/:id", getAttachment)
 
+	// Auth & Billing Hooks
+	v1.Post("/auth/register", registerUser)
+	v1.Post("/auth/login", loginUser)
+
+	// Protected endpoints would use a JWT middleware here
+	// v1.Post("/billing/checkout", jwtMiddleware(), createCheckoutSession)
+
 	app.Get("/events/:id", sseEvents)
 
 	port := os.Getenv("PORT")

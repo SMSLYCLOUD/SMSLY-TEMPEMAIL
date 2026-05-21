@@ -11,6 +11,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type ApiKey struct {
+	ID         uuid.UUID     `json:"id"`
+	UserID     uuid.NullUUID `json:"user_id"`
+	KeyHash    string        `json:"key_hash"`
+	Name       string        `json:"name"`
+	LastUsedAt sql.NullTime  `json:"last_used_at"`
+	CreatedAt  sql.NullTime  `json:"created_at"`
+}
+
 type Attachment struct {
 	ID          uuid.UUID     `json:"id"`
 	MessageID   uuid.NullUUID `json:"message_id"`
@@ -35,6 +44,7 @@ type Inbox struct {
 	CreatedAt      sql.NullTime   `json:"created_at"`
 	LastAccessedAt sql.NullTime   `json:"last_accessed_at"`
 	Status         sql.NullString `json:"status"`
+	UserID         uuid.NullUUID  `json:"user_id"`
 }
 
 type Message struct {
@@ -48,4 +58,33 @@ type Message struct {
 	RawHeaders sql.NullString `json:"raw_headers"`
 	SpamScore  sql.NullString `json:"spam_score"`
 	ReceivedAt sql.NullTime   `json:"received_at"`
+}
+
+type Subscription struct {
+	ID                   uuid.UUID      `json:"id"`
+	UserID               uuid.NullUUID  `json:"user_id"`
+	StripeCustomerID     sql.NullString `json:"stripe_customer_id"`
+	StripeSubscriptionID sql.NullString `json:"stripe_subscription_id"`
+	PlanTier             sql.NullString `json:"plan_tier"`
+	Status               sql.NullString `json:"status"`
+	CurrentPeriodEnd     sql.NullTime   `json:"current_period_end"`
+	CreatedAt            sql.NullTime   `json:"created_at"`
+	UpdatedAt            sql.NullTime   `json:"updated_at"`
+}
+
+type User struct {
+	ID           uuid.UUID      `json:"id"`
+	Email        string         `json:"email"`
+	PasswordHash string         `json:"password_hash"`
+	Role         sql.NullString `json:"role"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+type UserSession struct {
+	ID           uuid.UUID     `json:"id"`
+	UserID       uuid.NullUUID `json:"user_id"`
+	RefreshToken string        `json:"refresh_token"`
+	ExpiresAt    time.Time     `json:"expires_at"`
+	CreatedAt    sql.NullTime  `json:"created_at"`
 }

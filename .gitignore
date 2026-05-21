@@ -1,1 +1,9 @@
 node_modules/
+api
+smtp
+worker
+apps/api/api
+apps/smtp/smtp
+apps/worker/worker
+*.exe
+*.log
