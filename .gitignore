@@ -7,3 +7,6 @@ apps/smtp/smtp
 apps/worker/worker
 *.exe
 *.log
+.turbo/
+.next/
+dist/

@@ -10,7 +10,8 @@
     "build": "turbo run build",
     "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "test": "turbo run test"
+    "test": "turbo run test",
+    "start": "turbo run start"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0",
@@ -20,5 +21,6 @@
   "dependencies": {
     "@types/dompurify": "^3.0.5",
     "dompurify": "^3.4.5"
-  }
+  },
+  "packageManager": "npm@9.8.1"
 }
