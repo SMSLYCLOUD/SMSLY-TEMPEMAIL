@@ -64,7 +64,7 @@ func (q *Queries) CreateDomain(ctx context.Context, domainName string) (Domain, 
 const createInbox = `-- name: CreateInbox :one
 INSERT INTO inboxes (address, domain_id, expires_at)
 VALUES ($1, $2, $3)
-RETURNING id, address, domain_id, expires_at, created_at, last_accessed_at, status
+RETURNING id, address, domain_id, expires_at, created_at, last_accessed_at, status, user_id
 `
 
 type CreateInboxParams struct {
@@ -84,6 +84,7 @@ func (q *Queries) CreateInbox(ctx context.Context, arg CreateInboxParams) (Inbox
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.Status,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -135,7 +136,7 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) (M
 const deleteExpiredInboxes = `-- name: DeleteExpiredInboxes :many
 DELETE FROM inboxes
 WHERE expires_at < NOW()
-RETURNING id, address, domain_id, expires_at, created_at, last_accessed_at, status
+RETURNING id, address, domain_id, expires_at, created_at, last_accessed_at, status, user_id
 `
 
 func (q *Queries) DeleteExpiredInboxes(ctx context.Context) ([]Inbox, error) {
@@ -155,6 +156,7 @@ func (q *Queries) DeleteExpiredInboxes(ctx context.Context) ([]Inbox, error) {
 			&i.CreatedAt,
 			&i.LastAccessedAt,
 			&i.Status,
+			&i.UserID,
 		); err != nil {
 			return nil, err
 		}
@@ -223,7 +225,7 @@ const extendInbox = `-- name: ExtendInbox :one
 UPDATE inboxes
 SET expires_at = $2
 WHERE id = $1
-RETURNING id, address, domain_id, expires_at, created_at, last_accessed_at, status
+RETURNING id, address, domain_id, expires_at, created_at, last_accessed_at, status, user_id
 `
 
 type ExtendInboxParams struct {
@@ -242,6 +244,7 @@ func (q *Queries) ExtendInbox(ctx context.Context, arg ExtendInboxParams) (Inbox
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.Status,
+		&i.UserID,
 	)
 	return i, err
 }
@@ -279,7 +282,7 @@ func (q *Queries) GetDomainByName(ctx context.Context, domainName string) (Domai
 }
 
 const getInbox = `-- name: GetInbox :one
-SELECT id, address, domain_id, expires_at, created_at, last_accessed_at, status FROM inboxes
+SELECT id, address, domain_id, expires_at, created_at, last_accessed_at, status, user_id FROM inboxes
 WHERE id = $1 LIMIT 1
 `
 
@@ -294,12 +297,13 @@ func (q *Queries) GetInbox(ctx context.Context, id uuid.UUID) (Inbox, error) {
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.Status,
+		&i.UserID,
 	)
 	return i, err
 }
 
 const getInboxByAddress = `-- name: GetInboxByAddress :one
-SELECT id, address, domain_id, expires_at, created_at, last_accessed_at, status FROM inboxes
+SELECT id, address, domain_id, expires_at, created_at, last_accessed_at, status, user_id FROM inboxes
 WHERE address = $1 LIMIT 1
 `
 
@@ -314,6 +318,7 @@ func (q *Queries) GetInboxByAddress(ctx context.Context, address string) (Inbox,
 		&i.CreatedAt,
 		&i.LastAccessedAt,
 		&i.Status,
+		&i.UserID,
 	)
 	return i, err
 }
